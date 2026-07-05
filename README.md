@@ -10,6 +10,12 @@ Standard large language models (LLMs) are constrained by fixed parametric knowle
 
 ---
 
+## User Interface
+
+![Gemini RAG System Interface](static/RAGscreenshot.png)
+
+---
+
 ## System Architecture
 
 ```mermaid
