@@ -1,68 +1,81 @@
-# ✨ Gemini Document Intelligence Dashboard (RAG & Vector Search)
+# Gemini Document Intelligence Dashboard: A Retrieval-Augmented Generation Architecture
 
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Google Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-Google_AI_Studio-4285F4?style=flat&logo=google&logoColor=white)](https://aistudio.google.com)
-[![ChromaDB](https://img.shields.io/badge/Vector_DB-ChromaDB-FF6F00?style=flat)](https://trychroma.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-A high-performance, full-stack **Retrieval-Augmented Generation (RAG)** web dashboard. Upload session documents (PDF, TXT, Markdown) to index them into a high-dimensional vector database (ChromaDB) and chat in real-time with grounded AI responses backed by precise document citations.
+An end-to-end full-stack Retrieval-Augmented Generation (RAG) system built to evaluate real-time document chunking, vector embedding search, and grounded language model inference. The platform allows users to upload unstructured text, Portable Document Format (PDF), and Markdown files for session-based vector indexing and query-answering with verifiable source attribution.
 
 ---
 
-## 🌟 Key Features
+## Abstract
 
-- **📂 Session Drag-and-Drop Ingestion**: Upload PDF, TXT, or Markdown files directly from the browser.
-- **⚡ Vector Similarity Search**: Powered by Google's `gemini-embedding-001` (768-dimensional space) and ChromaDB vector store.
-- **💬 Grounded AI Generation**: Answers are synthesized exclusively from retrieved document context using `gemini-2.5-flash` with automatic fallback to `gemini-1.5-flash`.
-- **📌 Interactive Citations**: Every response includes clickable source pills displaying exact document names and chunk indices.
-- **🎨 Glassmorphism UI**: Dark mode dashboard built with modern HTML5, CSS3, and Vanilla JavaScript.
+Standard large language models (LLMs) are constrained by fixed parametric knowledge and context window limits. This project implements a local RAG pipeline using FastAPI, ChromaDB, and Google's Gemini 2.5 Flash API. Documents uploaded during a session are parsed, split into overlapping text windows, and embedded into a 768-dimensional vector space using the `gemini-embedding-001` model. Upon receiving a natural language prompt, the system executes cosine similarity search in ChromaDB to retrieve the top $K$ relevant passages and passes them as grounding context to the language model, minimizing hallucination and maintaining precise document citations.
 
 ---
 
-## 📐 System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
-    UserUpload[User Uploads PDFs / TXTs / MDs] --> Extractor[Text Extractor & Overlapping Chunker]
-    Extractor --> Embedder[Google gemini-embedding-001 Model]
-    Embedder --> VectorDB[(ChromaDB Vector Store R^768)]
+    A[Document Upload PDF / TXT / MD] --> B[Text Extractor & Overlapping Chunker]
+    B --> C[Google gemini-embedding-001 API]
+    C --> D[ChromaDB Vector Database R^768]
     
-    UserQuestion[User Asks Question] --> QEmbedder[Embed Question Vector q]
-    QEmbedder --> Search[Cosine Similarity Search Top-K]
-    VectorDB --> Search
-    Search -->|Top 3 Chunks| ContextBuilder[Context & Prompt Assembly]
-    ContextBuilder --> Gemini[Gemini 2.5 Flash Generation]
-    Gemini --> UI[Interactive Chat UI with Citations]
+    E[User Query Prompt] --> F[Query Embedding Generator]
+    F --> G[Cosine Similarity Search Top-K]
+    D --> G
+    G --> H[Context Assembly & Grounding Prompt]
+    H --> I[Gemini 2.5 Flash Inference Engine]
+    I --> J[User Response with Source Citations]
 ```
 
 ---
 
-## 🧮 Mathematical Blueprint
+## Mathematical Framework
 
-### 1. Vector Embeddings ($\mathbb{R}^{768}$)
-Each text chunk is mapped into a 768-dimensional latent semantic space:
-$$f: \text{Text Chunk} \longrightarrow \vec{v} \in \mathbb{R}^{768}$$
+### 1. Vector Space Mapping
+Given a text chunk $T_i$, the embedding function $f$ maps $T_i$ into a continuous 768-dimensional vector space:
 
-### 2. Cosine Similarity Metric
-Retrieval distance between query vector $\vec{q}$ and document chunk vector $\vec{d}$ is computed as:
-$$\text{Cosine Similarity}(\vec{q}, \vec{d}) = \cos(\theta) = \frac{\vec{q} \cdot \vec{d}}{\|\vec{q}\| \|\vec{d}\|} = \frac{\sum_{i=1}^{768} q_i d_i}{\sqrt{\sum_{i=1}^{768} q_i^2} \sqrt{\sum_{i=1}^{768} d_i^2}}$$
+$$f: T_i \longrightarrow \vec{v}_i \in \mathbb{R}^{768}$$
 
-### 3. $K$-NN Optimization
-ChromaDB selects the top $K=3$ document chunks solving:
-$$\text{Top-}K = \arg\max_{d_i \in \text{DB}}^{(K)} \text{Sim}(\vec{q}, \vec{d}_i)$$
+Where:
+
+$$\vec{v}_i = \begin{bmatrix} v_{i,1} \\ v_{i,2} \\ \vdots \\ v_{i,768} \end{bmatrix}$$
+
+### 2. Similarity Metric
+Given a user query vector $\vec{q}$ and document chunk vector $\vec{d}_i$, similarity is evaluated using the Cosine Similarity metric:
+
+$$\text{Sim}(\vec{q}, \vec{d}_i) = \cos(\theta) = \frac{\vec{q} \cdot \vec{d}_i}{\|\vec{q}\| \|\vec{d}_i\|} = \frac{\sum_{k=1}^{768} q_k d_{i,k}}{\sqrt{\sum_{k=1}^{768} q_k^2} \sqrt{\sum_{k=1}^{768} d_{i,k}^2}}$$
+
+The metric yields values in the range $[-1, 1]$, where values closer to $1.0$ indicate high semantic alignment.
+
+### 3. Nearest Neighbor Selection ($K$-NN)
+The retrieval component selects the top $K=3$ candidate passages solving the optimization:
+
+$$\text{Top-}K = \arg\max_{d_i \in \mathcal{D}}^{(K)} \text{Sim}(\vec{q}, \vec{d}_i)$$
+
+Using ChromaDB's Hierarchical Navigable Small World (HNSW) graph indexing, candidate search is executed in $O(\log N)$ average time complexity.
+
+### 4. Overlapping Windowing
+To preserve sentence structure at chunk boundaries, documents of length $M$ are segmented using a sliding window with chunk size $L = 500$ characters and overlap $O = 100$ characters:
+
+$$C = \left\lceil \frac{M - O}{L - O} \right\rceil = \left\lceil \frac{M - 100}{400} \right\rceil$$
 
 ---
 
-## 🚀 Quickstart Guide
+## Tech Stack & Dependencies
 
-### Prerequisites
-- Python 3.10+
-- Free Google AI Studio API key ([aistudio.google.com](https://aistudio.google.com/))
+- Backend Framework: FastAPI (ASGI Python 3.12 Server)
+- Vector Store: ChromaDB (Local Persistent Client)
+- Embedding Model: Google `gemini-embedding-001`
+- Generative LLM: Google `gemini-2.5-flash` (with automated fallback to `gemini-1.5-flash`)
+- PDF Parsing: `pypdf`
+- Frontend Interface: Vanilla HTML5, CSS3 Glassmorphism, JavaScript (ES6+), Marked.js
 
-### 1. Clone & Set Up Environment
+---
+
+## Setup & Running Locally
+
+### 1. Repository Setup
 ```bash
-git clone https://github.com/YOUR_USERNAME/gemini-rag-dashboard.git
+git clone https://github.com/azimsaidov/gemini-rag-dashboard.git
 cd gemini-rag-dashboard
 
 python3 -m venv venv
@@ -70,39 +83,24 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure API Key
-Copy `.env.example` to `.env` and add your free Gemini API key:
-```bash
-cp .env.example .env
-```
-In `.env`:
+### 2. Environment Configuration
+Create a `.env` file in the root directory and supply your Google AI Studio API key:
+
 ```env
-GEMINI_API_KEY=your_google_ai_studio_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 3. Run Web Dashboard
+### 3. Execution
+Start the local FastAPI ASGI server:
+
 ```bash
 python app.py
 ```
-Open **`http://127.0.0.1:8000`** in your browser!
+
+Access the web portal at `http://127.0.0.1:8000`.
 
 ---
 
-## 📁 Repository Structure
+## License
 
-```text
-gemini-rag-dashboard/
-├── app.py                 # FastAPI backend server & REST API endpoints
-├── static/                # Glassmorphism UI Frontend
-│   ├── index.html         # Dashboard layout & structure
-│   ├── style.css          # CSS3 glassmorphism styles & animations
-│   └── script.js          # Asynchronous upload & chat client logic
-├── requirements.txt       # Dependencies (FastAPI, Google GenAI, ChromaDB, PyPDF)
-├── .env.example           # Environment template
-└── README.md              # Project documentation & architecture
-```
-
----
-
-## 📜 License
-Distributed under the MIT License. See `LICENSE` for more information.
+MIT License. See `LICENSE` for details.
