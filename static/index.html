@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Intelligence RAG Dashboard</title>
+  <!-- Google Fonts & Marked.js for markdown rendering -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="logo-group">
+        <div class="logo-icon">✨</div>
+        <div>
+          <h1>Gemini Intelligence Dashboard</h1>
+          <p class="subtitle">Session Document Q&A RAG System</p>
+        </div>
+      </div>
+      <div class="badge-free">
+        <span class="status-dot"></span> Powered by Gemini 2.5 & ChromaDB
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="dashboard-body">
+      
+      <!-- SIDEBAR: FILE MANAGER -->
+      <aside class="sidebar">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>📁 Session Documents</h3>
+            <span class="chunk-badge" id="chunkCountBadge">0 chunks</span>
+          </div>
+
+          <!-- Drag and Drop Upload Area -->
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">📤</div>
+            <p class="drop-title">Drag & Drop Documents</p>
+            <p class="drop-sub">PDF, TXT, or Markdown files</p>
+            <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md" style="display: none;">
+            <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+          </div>
+
+          <!-- File Upload Progress / Status -->
+          <div id="uploadStatus" class="upload-status hidden">
+            <span class="spinner"></span> Indexing documents into ChromaDB...
+          </div>
+
+          <!-- Loaded Files List -->
+          <div class="files-container">
+            <h4>Loaded in Session:</h4>
+            <ul class="file-list" id="fileList">
+              <li class="empty-files">No documents uploaded yet</li>
+            </ul>
+          </div>
+
+          <!-- Clear Session Button -->
+          <button class="btn btn-danger" id="btnClearSession">
+            🗑️ Clear Session & Docs
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN CHAT PANEL -->
+      <main class="chat-panel">
+        <div class="panel-card chat-card">
+          <div class="chat-header">
+            <div class="chat-title">
+              💬 Ask Anything About Your Documents
+            </div>
+            <div class="hint-pill">RAG Grounded Intelligence</div>
+          </div>
+
+          <!-- Messages Log -->
+          <div class="chat-log" id="chatLog">
+            <div class="welcome-banner">
+              <div class="welcome-icon">🧠</div>
+              <h3>Welcome to Your AI Knowledge Base</h3>
+              <p>Upload your PDFs or text documents on the left sidebar, then ask any question below!</p>
+              <div class="example-chips">
+                <span class="chip" onclick="quickAsk('Summarize the main points of the uploaded document.')">💡 Summarize document</span>
+                <span class="chip" onclick="quickAsk('What are the key policies or requirements?')">📋 Key policies</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status indicator -->
+          <div id="chatStatus" class="chat-status hidden">
+            <span class="spinner"></span> Vector searching ChromaDB & generating response with Gemini...
+          </div>
+
+          <!-- Input Bar -->
+          <div class="chat-input-bar">
+            <textarea id="promptInput" placeholder="Ask a question about your uploaded documents..." rows="1"></textarea>
+            <button id="btnSend" class="btn btn-primary">
+              Send 🚀
+            </button>
+          </div>
+        </div>
+      </main>
+
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

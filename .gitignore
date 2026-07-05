@@ -1,0 +1,20 @@
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Secrets & Environment Variables (CRITICAL: Do not push API keys)
+.env
+*.env
+
+# Vector DB & Upload Storage
+chroma_db/
+uploads/*
+!uploads/.gitkeep
+
+# Python cache & build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
